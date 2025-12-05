@@ -52,6 +52,11 @@ class GeneratedExample:
             "cards": [{"color": card.color.value, "value": card.value} for card in self.cards],
             "answer": self.answer_text(),
             "response_type": self.rule.response_type.value,
+            "classification_labels": (
+                [self.rule.classification.above_label, self.rule.classification.below_label]
+                if self.rule.classification
+                else None
+            ),
             "paraphrased": self.paraphrased,
             "split": self.split,
             "intermediates": {

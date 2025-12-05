@@ -3,6 +3,7 @@
 ## Setup
 - Python version: 3.10 (see `.python-version`).
 - Install developer tooling: `python -m pip install -r requirements/dev.txt` (includes Black, Ruff, Pytest).
+- Install developer package: `pip install -e.`
 - Package metadata and build config live in `pyproject.toml`; source code is under `src/sft_rl_circuits`.
 
 ## CI
