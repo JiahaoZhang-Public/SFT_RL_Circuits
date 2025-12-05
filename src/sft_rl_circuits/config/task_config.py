@@ -49,7 +49,10 @@ class TaskConfig:
         """
         Convert to a TaskDatasetConfig, applying OOD category overrides if needed.
         """
-        return replace(self.dataset, ood_categories=self.rules.ood_categories)
+        ood_categories: Tuple[str, ...] = self.rules.ood_categories
+        if not self.rules.include_ood:
+            ood_categories = ()
+        return replace(self.dataset, ood_categories=ood_categories)
 
 
 def build_datasets(config: TaskConfig) -> task_dataset.TaskDatasetBundle:

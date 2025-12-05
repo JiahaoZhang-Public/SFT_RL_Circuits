@@ -31,6 +31,7 @@ class GenerationConfig:
     top_k: Optional[int] = None
     top_p: Optional[float] = None
     stop_tokens: Optional[List[str]] = None
+    max_prompt_tokens: Optional[int] = None
 
     def to_generate_kwargs(self) -> Dict[str, object]:
         kwargs: Dict[str, object] = {
@@ -138,6 +139,22 @@ def _is_semantically_valid(
     return parsed is not None
 
 
+def _get_prompt(ex: object) -> str:
+    if hasattr(ex, "prompt"):
+        return ex.prompt
+    if isinstance(ex, dict) and "prompt" in ex:
+        return ex["prompt"]
+    raise ValueError("Example is missing a 'prompt' field.")
+
+
+def _get_metadata(ex: object) -> Dict[str, object]:
+    if hasattr(ex, "metadata"):
+        return getattr(ex, "metadata")
+    if isinstance(ex, dict) and "metadata" in ex:
+        return ex["metadata"]
+    raise ValueError("Example is missing 'metadata'; ensure formatted examples are passed to evaluation.")
+
+
 def _decode_outputs(outputs, tokenizer) -> List[str]:
     # Already decoded strings.
     if isinstance(outputs, list) and outputs and isinstance(outputs[0], str):
@@ -147,6 +164,21 @@ def _decode_outputs(outputs, tokenizer) -> List[str]:
     if hasattr(outputs, "to") and hasattr(outputs, "cpu"):
         outputs = outputs.cpu()
     return tokenizer.batch_decode(outputs, skip_special_tokens=True)
+
+
+def _apply_stop_tokens(texts: List[str], stop_tokens: Optional[List[str]]) -> List[str]:
+    if not stop_tokens:
+        return texts
+    cleaned: List[str] = []
+    for text in texts:
+        truncated = text
+        for stop in stop_tokens:
+            idx = truncated.find(stop)
+            if idx != -1:
+                truncated = truncated[:idx]
+                break
+        cleaned.append(truncated)
+    return cleaned
 
 
 def _generate_text(
@@ -159,18 +191,20 @@ def _generate_text(
     gen_kwargs = gen_config.to_generate_kwargs()
     # If torch is unavailable or the model opts into text-only generation, call generate with raw prompts.
     if getattr(model, "text_only_generate", False) or torch is None:
-        return model.generate(prompts, **gen_kwargs)
+        outputs = model.generate(prompts, **gen_kwargs)
+        return _apply_stop_tokens(outputs, gen_config.stop_tokens)
 
-    inputs = tokenizer(
-        list(prompts),
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-    )
+    tok_kwargs: Dict[str, object] = {"return_tensors": "pt", "padding": True, "truncation": False}
+    if gen_config.max_prompt_tokens is not None:
+        tok_kwargs["truncation"] = True
+        tok_kwargs["max_length"] = gen_config.max_prompt_tokens
+
+    inputs = tokenizer(list(prompts), **tok_kwargs)
     if device and hasattr(inputs, "to"):
         inputs = inputs.to(device)
     output_ids = model.generate(**inputs, **gen_kwargs)
-    return _decode_outputs(output_ids, tokenizer)
+    decoded = _decode_outputs(output_ids, tokenizer)
+    return _apply_stop_tokens(decoded, gen_config.stop_tokens)
 
 
 def evaluate_split(
@@ -196,15 +230,16 @@ def evaluate_split(
 
     for start in range(0, total, batch_size):
         batch = examples[start : start + batch_size]
-        prompts = [ex.prompt for ex in batch]
+        prompts = [_get_prompt(ex) for ex in batch]
         model_outputs = _generate_text(
             model, tokenizer, prompts, generation_config, eval_config.device
         )
         for ex, raw_output in zip(batch, model_outputs):
+            metadata = _get_metadata(ex)
             is_valid, parsed = parser.parse(raw_output)
-            response_type = ex.metadata.get("response_type")
-            expected = ex.metadata.get("answer")
-            labels = ex.metadata.get("classification_labels")
+            response_type = metadata.get("response_type")
+            expected = metadata.get("answer")
+            labels = metadata.get("classification_labels")
             if is_valid and _is_semantically_valid(parsed, response_type, expected, labels):
                 valid += 1
                 expected_canon = _canonicalize_answer(expected)
