@@ -43,7 +43,11 @@ class GeneratedExample:
     split: str
 
     def answer_text(self) -> str:
-        return self.result.classification if self.result.classification is not None else str(self.result.total)
+        return (
+            self.result.classification
+            if self.result.classification is not None
+            else str(self.result.total)
+        )
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -77,7 +81,10 @@ class GeneratedExample:
 
 
 def _ensure_required_colors(
-    cards: List[rules.Card], required_colors: Sequence[rules.Color], value_range: Tuple[int, int], rng: random.Random
+    cards: List[rules.Card],
+    required_colors: Sequence[rules.Color],
+    value_range: Tuple[int, int],
+    rng: random.Random,
 ) -> None:
     missing = [color for color in required_colors if color not in {card.color for card in cards}]
     for color in missing:
@@ -105,7 +112,8 @@ def sample_cards_for_rule(
         available_colors = list(rules.Color)
 
     cards = [
-        rules.Card(color=rng.choice(available_colors), value=rng.randint(*value_range)) for _ in range(num_cards)
+        rules.Card(color=rng.choice(available_colors), value=rng.randint(*value_range))
+        for _ in range(num_cards)
     ]
     _ensure_required_colors(cards, rule.required_colors(), value_range, rng)
     return cards

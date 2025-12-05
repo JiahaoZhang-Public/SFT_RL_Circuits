@@ -8,7 +8,9 @@ from sft_rl_circuits.tasks import dataset
 
 
 def main() -> None:
-    config = dataset.TaskDatasetConfig(train_size=5, val_size=0, id_test_size=0, ood_test_size=3, seed=0)
+    config = dataset.TaskDatasetConfig(
+        train_size=5, val_size=0, id_test_size=0, ood_test_size=3, seed=0
+    )
     bundle = dataset.build_task_datasets(config)
 
     print("=== Train examples ===")

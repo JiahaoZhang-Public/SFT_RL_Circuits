@@ -20,7 +20,13 @@ except ImportError:
     Dataset = None  # type: ignore
 
 
-DEFAULT_OOD_CATEGORIES = ("new_colors", "compositional", "paraphrase", "length_shift", "classification")
+DEFAULT_OOD_CATEGORIES = (
+    "new_colors",
+    "compositional",
+    "paraphrase",
+    "length_shift",
+    "classification",
+)
 
 
 @dataclass
@@ -48,7 +54,9 @@ class TaskSplit:
 
     def to_hf_dataset(self) -> "Dataset":
         if Dataset is None:
-            raise ImportError("datasets is not installed; run `pip install datasets` to enable this feature.")
+            raise ImportError(
+                "datasets is not installed; run `pip install datasets` to enable this feature."
+            )
         data = [{"prompt": ex.prompt, "target": ex.target, **ex.metadata} for ex in self.formatted]
         return Dataset.from_list(data)
 

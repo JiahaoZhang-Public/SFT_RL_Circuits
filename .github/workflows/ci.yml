@@ -30,7 +30,7 @@ jobs:
         run: black --check src
 
       - name: Lint
-        run: ruff src
+        run: ruff check src
 
       - name: Tests
         run: pytest -q

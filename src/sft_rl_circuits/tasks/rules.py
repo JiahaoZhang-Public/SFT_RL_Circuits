@@ -261,7 +261,9 @@ def _color_predicate_rule(color: Color, predicate: ValuePredicate) -> RuleSpec:
         f"Only consider {color.value} cards; add the ones {predicate.verbalize()}.",
         f"Compute the total of {color.value} card values that are {predicate.verbalize()}.",
     )
-    clauses = (RuleClause(colors=(color,), predicate=predicate, weight=1, aggregate=AggregateType.SUM),)
+    clauses = (
+        RuleClause(colors=(color,), predicate=predicate, weight=1, aggregate=AggregateType.SUM),
+    )
     return RuleSpec(
         name=f"{color.value.lower()}_{predicate.kind.value}",
         clauses=clauses,
@@ -293,12 +295,14 @@ IN_DISTRIBUTION_RULES: Tuple[RuleSpec, ...] = (
 
 # OOD variants grouped by shift type to make reporting clearer.
 OOD_RULE_FAMILIES: Dict[str, Tuple[RuleSpec, ...]] = {
-    "new_colors": (
-        _color_add_subtract_rule(Color.GREEN, Color.YELLOW),
-    ),
+    "new_colors": (_color_add_subtract_rule(Color.GREEN, Color.YELLOW),),
     "compositional": (
-        _color_predicate_rule(Color.RED, ValuePredicate(kind=PredicateType.GREATER_THAN, threshold=4)),
-        _color_predicate_rule(Color.BLUE, ValuePredicate(kind=PredicateType.LESS_EQUAL, threshold=3)),
+        _color_predicate_rule(
+            Color.RED, ValuePredicate(kind=PredicateType.GREATER_THAN, threshold=4)
+        ),
+        _color_predicate_rule(
+            Color.BLUE, ValuePredicate(kind=PredicateType.LESS_EQUAL, threshold=3)
+        ),
     ),
     "paraphrase": IN_DISTRIBUTION_RULES,
     "classification": (_threshold_classifier_rule(10),),

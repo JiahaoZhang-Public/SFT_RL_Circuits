@@ -41,7 +41,9 @@ def _build_answer_map(bundle):
 
 
 def test_evaluation_pipeline_runs_and_returns_metrics():
-    cfg = dataset.TaskDatasetConfig(train_size=0, val_size=0, id_test_size=3, ood_test_size=2, seed=0)
+    cfg = dataset.TaskDatasetConfig(
+        train_size=0, val_size=0, id_test_size=3, ood_test_size=2, seed=0
+    )
     bundle = dataset.build_task_datasets(cfg)
     answer_map = _build_answer_map(bundle)
     model = DummyModel(answer_map)
@@ -90,7 +92,10 @@ def test_invalid_numeric_output_is_not_counted_valid():
     ex = type(
         "Formatted",
         (),
-        {"prompt": "Rule: x\nCards:\n\nAnswer:", "metadata": {"answer": 5, "response_type": "numeric"}},
+        {
+            "prompt": "Rule: x\nCards:\n\nAnswer:",
+            "metadata": {"answer": 5, "response_type": "numeric"},
+        },
     )
     model = FixedModel({ex.prompt: f"{ex.prompt}\nAnswer: BIG"})
     tokenizer = DummyTokenizer()
@@ -115,7 +120,11 @@ def test_classification_validity_allows_label_set_but_accuracy_separate():
         (),
         {
             "prompt": "Rule: x\nCards:\n\nAnswer:",
-            "metadata": {"answer": "BIG", "response_type": "classification", "classification_labels": ["BIG", "SMALL"]},
+            "metadata": {
+                "answer": "BIG",
+                "response_type": "classification",
+                "classification_labels": ["BIG", "SMALL"],
+            },
         },
     )
     model = FixedModel({ex.prompt: f"{ex.prompt}\nAnswer: SMALL"})

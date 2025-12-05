@@ -27,9 +27,15 @@ from sft_rl_circuits.training import (
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate GPT-2 on the rule-based scoring task.")
-    parser.add_argument("--model", default="openai-community/gpt2", help="HF model name or local path")
-    parser.add_argument("--device", default="cpu", help="Device string for torch (e.g., cpu, cuda:0)")
-    parser.add_argument("--max-examples", type=int, default=8, help="Cap examples per split for speed")
+    parser.add_argument(
+        "--model", default="openai-community/gpt2", help="HF model name or local path"
+    )
+    parser.add_argument(
+        "--device", default="cpu", help="Device string for torch (e.g., cpu, cuda:0)"
+    )
+    parser.add_argument(
+        "--max-examples", type=int, default=8, help="Cap examples per split for speed"
+    )
     return parser.parse_args()
 
 
@@ -78,7 +84,9 @@ def main() -> None:
 
     print("=== Metrics ===")
     for name, metrics in results.split_metrics.items():
-        print(f"{name}: accuracy={metrics.accuracy:.3f}, format_validity={metrics.format_validity:.3f}, n={metrics.n_examples}")
+        print(
+            f"{name}: accuracy={metrics.accuracy:.3f}, format_validity={metrics.format_validity:.3f}, n={metrics.n_examples}"
+        )
     if results.generalization_gaps:
         print("=== Generalization gaps (id_test - ood) ===")
         for name, gap in results.generalization_gaps.items():

@@ -119,7 +119,10 @@ def _canonicalize_answer(value: object) -> object:
 
 
 def _is_semantically_valid(
-    parsed: object, response_type: Optional[str], expected_answer: object, allowed_labels: Optional[Sequence[object]]
+    parsed: object,
+    response_type: Optional[str],
+    expected_answer: object,
+    allowed_labels: Optional[Sequence[object]],
 ) -> bool:
     if response_type == "numeric":
         return isinstance(parsed, int)
@@ -194,7 +197,9 @@ def evaluate_split(
     for start in range(0, total, batch_size):
         batch = examples[start : start + batch_size]
         prompts = [ex.prompt for ex in batch]
-        model_outputs = _generate_text(model, tokenizer, prompts, generation_config, eval_config.device)
+        model_outputs = _generate_text(
+            model, tokenizer, prompts, generation_config, eval_config.device
+        )
         for ex, raw_output in zip(batch, model_outputs):
             is_valid, parsed = parser.parse(raw_output)
             response_type = ex.metadata.get("response_type")
@@ -209,7 +214,9 @@ def evaluate_split(
 
     accuracy = correct / total
     format_validity = valid / total
-    return SplitMetrics(split_name=split_name, n_examples=total, accuracy=accuracy, format_validity=format_validity)
+    return SplitMetrics(
+        split_name=split_name, n_examples=total, accuracy=accuracy, format_validity=format_validity
+    )
 
 
 def compute_generalization_gaps(
