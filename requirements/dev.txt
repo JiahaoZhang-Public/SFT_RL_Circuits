@@ -1,0 +1,4 @@
+-r runtime.txt
+pytest>=7.4
+ruff>=0.6
+black>=24.3

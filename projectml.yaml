@@ -1,0 +1,15 @@
+name: SFT_RL_Circuits
+description: Baseline configuration for SFT and RL circuit experiments
+language: python
+python: "3.10"
+package:
+  root: src
+  module: sft_rl_circuits
+dependencies:
+  runtime: requirements/runtime.txt
+  dev: requirements/dev.txt
+ci:
+  github_actions: .github/workflows/ci.yml
+notes:
+  - Update requirements files as the project grows
+  - Keep Python 3.10 as the default interpreter unless otherwise specified
