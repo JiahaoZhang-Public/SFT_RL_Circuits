@@ -152,7 +152,9 @@ def _get_metadata(ex: object) -> Dict[str, object]:
         return getattr(ex, "metadata")
     if isinstance(ex, dict) and "metadata" in ex:
         return ex["metadata"]
-    raise ValueError("Example is missing 'metadata'; ensure formatted examples are passed to evaluation.")
+    raise ValueError(
+        "Example is missing 'metadata'; ensure formatted examples are passed to evaluation."
+    )
 
 
 def _decode_outputs(outputs, tokenizer) -> List[str]:
@@ -166,18 +168,37 @@ def _decode_outputs(outputs, tokenizer) -> List[str]:
     return tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
 
-def _apply_stop_tokens(texts: List[str], stop_tokens: Optional[List[str]]) -> List[str]:
+def _apply_stop_tokens(
+    texts: List[str], stop_tokens: Optional[List[str]], prompts: Optional[Sequence[str]] = None
+) -> List[str]:
     if not stop_tokens:
         return texts
     cleaned: List[str] = []
-    for text in texts:
-        truncated = text
+    for idx_text, text in enumerate(texts):
+        prefix = ""
+        if prompts is not None:
+            prompt = prompts[idx_text]
+            if text.startswith(prompt):
+                prefix = prompt
+                suffix = text[len(prompt) :]
+            else:
+                suffix = text
+        else:
+            suffix = text
+
+        # Find the earliest position of any stop token
+        earliest_stop_idx = None
         for stop in stop_tokens:
-            idx = truncated.find(stop)
-            if idx != -1:
-                truncated = truncated[:idx]
-                break
-        cleaned.append(truncated)
+            stop_idx = suffix.find(stop)
+            if stop_idx != -1:
+                if earliest_stop_idx is None or stop_idx < earliest_stop_idx:
+                    earliest_stop_idx = stop_idx
+
+        if earliest_stop_idx is not None:
+            truncated_suffix = suffix[:earliest_stop_idx]
+        else:
+            truncated_suffix = suffix
+        cleaned.append(prefix + truncated_suffix)
     return cleaned
 
 
@@ -192,7 +213,7 @@ def _generate_text(
     # If torch is unavailable or the model opts into text-only generation, call generate with raw prompts.
     if getattr(model, "text_only_generate", False) or torch is None:
         outputs = model.generate(prompts, **gen_kwargs)
-        return _apply_stop_tokens(outputs, gen_config.stop_tokens)
+        return _apply_stop_tokens(outputs, gen_config.stop_tokens, prompts)
 
     tok_kwargs: Dict[str, object] = {"return_tensors": "pt", "padding": True, "truncation": False}
     if gen_config.max_prompt_tokens is not None:
@@ -204,7 +225,7 @@ def _generate_text(
         inputs = inputs.to(device)
     output_ids = model.generate(**inputs, **gen_kwargs)
     decoded = _decode_outputs(output_ids, tokenizer)
-    return _apply_stop_tokens(decoded, gen_config.stop_tokens)
+    return _apply_stop_tokens(decoded, gen_config.stop_tokens, prompts)
 
 
 def evaluate_split(

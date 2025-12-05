@@ -1,3 +1,4 @@
 datasets # for dataset building, huggingface datasets
 transformers
 torch
+accelerate
